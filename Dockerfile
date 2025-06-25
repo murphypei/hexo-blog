@@ -1,5 +1,5 @@
-# 使用 Ubuntu 18.04 作为基础镜像
-FROM ubuntu:18.04
+# 使用 Ubuntu 20.04 作为基础镜像
+FROM ubuntu:20.04
 
 # 设置环境变量，防止交互提示
 ENV DEBIAN_FRONTEND=noninteractive
@@ -12,19 +12,31 @@ RUN apt-get update && \
 WORKDIR /tmp
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt-get install -y nodejs
 
-COPY ./package.json /app/
-COPY ./package-lock.json /app/
-COPY ./_config.yml /app/
-COPY ./scaffolds /app/
-COPY ./source /app/
-COPY ./themes /app/
+# 复制所有文件到容器中
+COPY . /app/
 
 WORKDIR /app
+
+# 更新子模块（解决 NexT 主题没有拉下来的问题）
+RUN git submodule update --init --recursive
+
+# 安装 hexo-cli
 RUN npm install -g hexo-cli@3.1.0
-# RUN npm install .
-# RUN cp ./node_modules/live2d-widget-model-haru/package.json ./node_modules/live2d-widget-model-haru/01
-# RUN cp ./node_modules/live2d-widget-model-haru/package.json ./node_modules/live2d-widget-model-haru/02
+
+# 安装项目依赖
+RUN npm install .
+
+# 解决 live2d-widget-model-haru 的 package.json 问题
+RUN if [ -d "./node_modules/live2d-widget-model-haru" ]; then \
+        cp ./node_modules/live2d-widget-model-haru/package.json ./node_modules/live2d-widget-model-haru/01/ && \
+        cp ./node_modules/live2d-widget-model-haru/package.json ./node_modules/live2d-widget-model-haru/02/; \
+    fi
+
+# 配置 git（避免 spawn git ENOENT 错误）
+# RUN git config --global user.name "Docker User" && \
+#     git config --global user.email "docker@example.com"
 
 EXPOSE 4000
 
-CMD ["/bin/bash"]
+# 设置默认命令为启动 hexo 服务器
+CMD ["hexo", "server", "-p", "4000", "-i", "0.0.0.0"]
