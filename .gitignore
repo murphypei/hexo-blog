@@ -7,3 +7,6 @@ public
 .deploy*/
 .vscode
 .history
+!fix_files
+!fix_files/
+!fix_files/**

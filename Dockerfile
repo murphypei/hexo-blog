@@ -20,10 +20,8 @@ WORKDIR /app
 # 更新子模块（解决 NexT 主题没有拉下来的问题）
 RUN git submodule update --init --recursive
 
-# 安装 hexo-cli
-RUN npm install -g hexo-cli@3.1.0
-
 # 安装项目依赖
+RUN npm install -g hexo-cli@3.1.0
 RUN npm install .
 
 # 解决 live2d-widget-model-haru 的 package.json 问题
@@ -32,11 +30,20 @@ RUN if [ -d "./node_modules/live2d-widget-model-haru" ]; then \
         cp ./node_modules/live2d-widget-model-haru/package.json ./node_modules/live2d-widget-model-haru/02/; \
     fi
 
-# 配置 git（避免 spawn git ENOENT 错误）
-# RUN git config --global user.name "Docker User" && \
-#     git config --global user.email "docker@example.com"
+# 解决 MathJax 下划线冲突问题
+RUN npm uninstall hexo-renderer-marked --save
+RUN npm install hexo-renderer-kramed --save
 
-EXPOSE 4000
+# 修改 kramed 配置文件解决下划线冲突
+RUN cp ./fix_files/node_modules/kramed/lib/rules/inline.js ./node_modules/kramed/lib/rules/inline.js
+
+# 配置 git（避免 spawn git ENOENT 错误）
+RUN git config --global user.name "murphypei" && \
+    git config --global user.email "murphypei47@gmail.com"
+
+RUN hexo clean && hexo generate
+
+EXPOSE 4001
 
 # 设置默认命令为启动 hexo 服务器
-CMD ["hexo", "server", "-p", "4000", "-i", "0.0.0.0"]
+CMD ["hexo", "server", "-p", "4001", "-i", "0.0.0.0"]
