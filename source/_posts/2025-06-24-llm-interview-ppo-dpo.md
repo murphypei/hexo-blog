@@ -83,8 +83,6 @@ $$
 2. **保证训练稳定性**：过大的更新步长会导致训练不稳定，甚至发散
 3. **避免灾难性遗忘**：防止新策略完全偏离旧策略，丢失之前学到的有用知识
 
-
-
 PPO 的目标函数为：
 
 $$
@@ -96,12 +94,6 @@ $$
 - 如果 $A_t > 0$（好的动作），我们希望增加这个动作的概率，但最多只能增加到 $(1+\epsilon)$ 倍
 - 如果 $A_t < 0$（坏的动作），我们希望减少这个动作的概率，但最多只能减少到 $(1-\epsilon)$ 倍
 - $\epsilon$ 通常设置为 0.2，意味着策略更新幅度被限制在 ±20% 以内
-
-**裁剪机制的优势**：
-
-1. **自适应步长**：根据优势函数的值自动调整更新幅度
-2. **单调改进**：保证每次更新都能改善策略（在理论条件下）
-3. **简单有效**：相比其他约束方法（如TRPO），实现更简单，效果相当
 
 其中：
 
@@ -280,7 +272,7 @@ $$
 将奖励函数代入Bradley-Terry模型，得到DPO的目标函数：
 
 $$
-L_{DPO} = -\mathbb{E}_{(x, y_w, y_l) \sim D} [\log \sigma(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)})]
+L_{DPO} = -\mathbb{E}_{(x, y_w, y_l) \sim D} \left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)}\right)\right]
 $$
 
 其中：
