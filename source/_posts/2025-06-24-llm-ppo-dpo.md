@@ -1,9 +1,9 @@
 ---
-title: LLM 八股文：PPO 和 DPO
+title: LLM 训练：PPO 和 DPO
 date: 2025-06-24 20:44:51
 update: 2025-06-24 20:44:51
 categories: LLM
-tags: [LLM, 面试, rlhf, ppo, dpo]
+tags: [LLM, rlhf, ppo, dpo]
 mathjax: true
 ---
 已经接近 3 年没有更新博客了。今天立下一个 flag，开始准备 LLM 面试知识，主要是八股文为主，想到哪写到哪。第一篇没想到写啥，觉得对 PPO 和 DPO 比较了解，就先直接写这个吧。
