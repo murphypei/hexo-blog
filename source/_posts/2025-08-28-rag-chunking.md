@@ -2,12 +2,12 @@
 title: RAG 分块策略
 date: 2025-08-28 14:35:25
 update: 2025-08-28 14:35:25
-categories: LLM
-tags: [LLM, RAG, chunk, retrieval, index]
+categories: RAG
+tags: [LLM, RAG, chunk, retrieval, index, 分块, 检索]
 mathjax: true
 ---
 
-在构建一个高效的检索增强生成（RAG）系统时，一个常常被忽视但至关重要的环节是**分块（Chunking）**。这个过程是将大型文档切分成小块，以便LLM可以轻松地检索和理解。如果分块策略不当，即使拥有最先进的语言模型和向量数据库，你的 RAG 系统也可能表现不佳。
+在构建一个高效的检索增强生成（RAG）系统时，一个常常被忽视但至关重要的环节是**分块（Chunking）**。这个过程是将大型文档切分成小块，以便 LLM 可以轻松地检索和理解。如果分块策略不当，即使拥有最先进的语言模型和向量数据库，你的 RAG 系统也可能表现不佳。
 
 <!-- more -->
 
