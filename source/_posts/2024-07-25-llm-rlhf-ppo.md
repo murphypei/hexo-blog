@@ -54,7 +54,7 @@ $$
 
 ![](/images/posts/llm/ppo/nlp-rl.webp)
 
-这里的 NLP 是特质生成模型。
+这里的 NLP 是特指生成模型。
 
 生成模型的推理执行过程：给模型一个 prompt，让模型能生成符合人类喜好的 response。再回想一下 GPT 模型做推理的过程：每个时刻 $t$ 只产生一个 token，即 token 是一个一个蹦出来的，先有上一个 token，再有下一个 token。
 
@@ -83,13 +83,25 @@ RLHF 中使用的模型示意图：
 
 现在大家都知道 PPO 有 4 个模型，上面我们说了 3 个，还有 1 个，这里将 4 个模型都列出来：
 * **Actor Model**：PPO 训练的模型，也是我们最终要用于应用的模型。
-* **Critic Model**：即时收益 $V_t$，反映的是当前输出的潜在价值。
-* **Reward Model**：整体收益的打分模型，也是上面的 $R_t$。
+* **Critic Model**：价值函数，反映的是当前环境和状态下，该动作的预期**长期收益** $V_t$。
+* **Reward Model**：奖励函数，一个标量，表示当前prompt+响应的整体质量，也是上面的 $R_t$。
 * **Reference Model**：这个模型是额外增加的，主要是在 RLHF 阶段给语言模型增加一些"约束"，防止语言模型训歪（朝不受控制的方向更新，效果可能越来越差）。这个看 Loss 就能明白了。
+
+再次强调一下**奖励模型和价值模型的区别**：
+
+Reward Model (奖励模型) RM
+* 作用： 它是根据人类偏好数据训练出来的模型，用来取代传统 RL 中的手动奖励函数。
+* 计算对象 (即时收益)： RM 的输出是一个标量分数，表示 (提示 Prompt + 完整响应 Response) 这个序列的整体质量。
+* 结论： RM 给出的是对整个生成序列的即时/单一评估分数，但这个分数代表的是对最终整体表现的评估。在 RLHF 中，它为强化学习提供了一个稀疏 (Sparse) 的奖励信号。
+
+Critic Model (评论家模型) V
+* 作用： 评估当前状态（State）或状态-动作对（State-Action Pair）的长期价值，指导 Actor（即 LLM 本身）的策略更新。
+* 计算对象 (整体收益)： V 的输出是一个标量分数，表示从当前状态（$s$）开始，遵循当前策略一直到结束所能获得的期望累积折扣奖励 (Expected Cumulative Discounted Reward)，即 $V(s) = \mathbb{E}[\sum_{t'=t}^{T} \gamma^{t'-t} r_{t'}]$。
+* 结论： V 估算的是未来的整体收益。它通过时序差分 (Temporal Difference, TD) 学习，帮助解决强化学习中的信用分配问题 (Credit Assignment Problem)。
 
 ### 哪些模型需要更新参数？
 
-Actor Model 和 Critic Model。Actor 肯定是很好理解的，所以不多说了，Critic Model 为什么也要更新？主要是这里存在一个难点：怎么评估总体收益呢？我们自己随口一说评估总体收益，但是这个是很难的，因为没有真的标签（有监督）。所以我们需要通过一个模型来判断，而且更重要的是，这个判断模型的能力，**要不断提升能力**，才能做好这件事。
+Actor Model 和 Critic Model。Actor 肯定是很好理解的，所以不多说了，Critic Model 为什么也要更新？主要是这里存在一个难点：怎么评估潜在收益呢？我们自己随口一说评估总体收益，但是这个是很难的，因为没有真的标签（有监督）。所以我们需要通过一个模型来判断，而且更重要的是，这个判断模型的能力，**要不断提升能力**，才能做好这件事。
 
 ### Actor Model
 
@@ -136,3 +148,30 @@ Reference Model 输入和 Actor Model 一致，输出是一个参考答案。
 ## RLHF 的 Loss 计算
 
 我已经看过太多次了，所以不想重新写这个了，直接看原文或者网上搜一下就知道了。注意每一项对应 ref、critic、reward 模型，结合前面讲解的各个模型的作用，应该能很好地理解这个 Loss 的含义。
+
+这里重点讲一下**如何计算每次 Token 的优势估计**。
+
+PPO (使用 GAE) 中每个 Token 优势估计的计算逻辑核心目标是计算 $\mathbf{A}(s_t, a_t)$，即在状态 $s_t$ 采取动作 $a_t$ 的额外好处。
+
+步骤 1：计算 Token 级别的即时奖励 ($r_t$)。
+
+$$r_t = \underbrace{r_{\text{RM}, t}}_{\text{稀疏 RM 奖励}} - \underbrace{\beta \cdot \log \left(\frac{\pi_{\theta}(a_t|s_t)}{\pi_{\text{SFT}}(a_t|s_t)}\right)}_{\text{KL 惩罚}}$$
+
+* $r_{\text{RM}, t}$ (稀疏 RM 奖励):
+    * $t = 1 \text{ 到 } T-1$ (中间 token): $0$
+    * $t = T$ (最后一个 token): $r_{\text{final}}$ (RM 的输出)
+* KL 惩罚项: 每个 token 都有一个负值 (如果 Policy 偏离 SFT 模型)。
+结果： 得到了一个包含稀疏 RM 信号和密集 KL 惩罚的 token 序列即时奖励 $[r_1, r_2, \dots, r_T]$。
+
+步骤 2：计算 Critic 模型的时序差分 (TD) 误差 ($\delta_t$)
+
+这是 GAE 的基础，结合 $r_t$ 和 Critic 模型 $V$ 的结果。
+
+$$\delta_t = \underbrace{r_t}_{\text{即时奖励}} + \underbrace{\gamma V(s_{t+1})}_{\text{下一状态价值}} - \underbrace{V(s_t)}_{\text{当前状态价值}}$$
+
+* $V(s_t)$ 和 $V(s_{t+1})$: 由 Critic Model 对 token 序列的隐藏状态进行评估所得。
+* $\delta_t$ 衡量了实际观测到的短期收益（$r_t + \gamma V(s_{t+1})$）与 模型原本估计的长期收益（$V(s_t)$）之间的差异。
+
+步骤 3：使用 GAE 平滑估计优势函数 ($\mathbf{A}_t$)最后，使用 GAE 公式，将一系列 TD 误差平滑地组合起来，得到最终用于 PPO 策略更新的优势估计：
+
+$$\mathbf{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma \lambda)^l \delta_{t+l}$$
