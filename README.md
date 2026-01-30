@@ -6,8 +6,9 @@
 
 ## 环境要求
 
-* **Node.js**: v16.x（推荐使用 nvm 进行版本管理）
-* **npm**: v7.x 或以上
+* **Node.js**: v18.x（推荐使用 nvm 进行版本管理）
+* **npm**: v6.x 或以上
+* **Hexo**: v5.4.2
 * **Git**: 用于拉取子模块
 * **macOS 特殊说明**: 本项目在 Apple Silicon（M 芯片）上已验证
 
@@ -23,18 +24,18 @@
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 ```
 
-#### 配置 Node.js v16
+#### 配置 Node.js v18
 
 ```bash
-# 安装 Node.js v16
-nvm install 16
+# 安装 Node.js v18
+nvm install 18
 
-# 切换到 v16
-nvm use 16
+# 切换到 v18
+nvm use 18
 
 # 验证版本
-node --version  # 应显示 v16.x.x
-npm --version   # 应显示 v7.x 或以上
+node --version  # 应显示 v18.x.x
+npm --version   # 应显示 v6.x 或以上
 ```
 
 ### 2. 初始化项目
@@ -112,13 +113,13 @@ git submodule update --init --recursive
 
 ### 2. Node.js 版本问题
 
-**推荐版本**: Node.js v16.x
+**推荐版本**: Node.js v18.x
 
 **问题**: 使用过新或过旧的 Node.js 版本可能导致依赖安装失败。
 
 **解决方案**:
 ```bash
-nvm use 16
+nvm use 18
 rm -rf node_modules package-lock.json
 npm install
 ```

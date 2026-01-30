@@ -88,6 +88,7 @@ theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
+## Note: GitHub Pages 现在默认使用 main 分支，如果您的仓库使用 main 分支，请将 branch 改为 main
 deploy:
   type: git
   repository: https://github.com/murphypei/murphypei.github.io.git
