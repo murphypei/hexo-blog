@@ -1,9 +1,9 @@
 ---
-title: 论文阅读：《FQ-Eval Building Evaluation Dataset for User-centered Follow-up Question Generation》
-date: 2025-12-01 16:20:00
-update: 2025-12-01 16:20:00
-categories: LLM
-tags: [LLM, DAPO, GRPO, 强化学习, 策略优化]
+title: 《FQ-Eval Building Evaluation Dataset for User-centered Follow-up Question Generation》
+date: 2026-03-04 16:20:00
+update: 2026-03-04 16:20:00
+categories: 论文阅读
+tags: [论文, FQ-Eval, Evaluation, Dataset, Follow-up]
 mathjax: true
 ---
 
